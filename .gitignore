@@ -13,6 +13,7 @@ dataset/
 
 # IDE
 .idea/
+.claude/
 .vscode/
 *.swp
 
