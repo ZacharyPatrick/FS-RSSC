@@ -426,6 +426,7 @@ def main(config):
     high_lr_params_id = []
     high_lr_params_id += [id(param) for param in model.support_controller.parameters()]
     high_lr_params_id += [id(param) for param in model.rerank_controller.parameters()]
+    high_lr_params_id += [id(param) for param in model.phi.parameters()]
     # high_lr_params_id += [id(param) for param in model.proj_k.parameters()]
     # high_lr_params_id += [id(param) for param in model.proj_q.parameters()]
     # high_lr_params_id += [id(param) for param in model.proj_v.parameters()]
