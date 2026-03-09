@@ -19,12 +19,12 @@ parser.add_argument('--smoothing', type=float, default=0.1)
 parser.add_argument('--batch_size', type=int, default=32)
 parser.add_argument('--num_workers', type=int, default=8, choices=[16,8,4,2,1])
 parser.add_argument('--image_size', type=int,default=224) 
-parser.add_argument('--ef_epoch', type=int,default=50)
+parser.add_argument('--ef_epoch', type=int,default=10)  # Transfer fine-tuning: evaluate more frequently
 parser.add_argument('--episode', type=int,default=2000)
 parser.add_argument('--backbone', type=str, default='visformer-t')
-parser.add_argument('--lr', type=float, default=2e-4)
-parser.add_argument('--epoch', type=int,default=1200, choices=[1200,800,300]) 
-parser.add_argument('--resume', type=str, default='/mnt/sdb/pzy/Awesome-Projects/VTEvo-FSL/checkpoint/UCM/best-1shot.pth') 
+parser.add_argument('--lr', type=float, default=2e-5)  # Transfer fine-tuning: 10x lower lr to preserve pretrained features
+parser.add_argument('--epoch', type=int,default=200)  # Transfer fine-tuning: fewer epochs, already good initialization
+parser.add_argument('--resume', type=str, default='') 
 parser.add_argument('--test', default=True, action='store_false')
 parser.add_argument('--gpu', default='2') 
 args = parser.parse_args() 
@@ -50,7 +50,7 @@ from tqdm import tqdm
 
 def main(args):
     utils.set_seed(args.seed)
-    args.root = '/mnt/sdb/pzy/Awesome-Projects/VTEvo-FSL'
+    args.root = '/mnt/sdb/pzy/Awesome-Projects/VT-FSL-Ours'
     svname = args.name      
     if svname is None:
         svname = '{}'.format(args.backbone)
@@ -101,9 +101,22 @@ def main(args):
             prob=args.mixup_prob, switch_prob=args.mixup_switch_prob, mode=args.mixup_mode,
             label_smoothing=args.smoothing, num_classes=num_classes)
 
-    # Model # 
+    # Model #
     model = visformer.visformer_tiny(num_classes=num_classes)
     utils.log('num params: {}'.format(utils.compute_n_params(model)))
+
+    # Load miniImageNet pretrained weights (transfer fine-tuning)
+    # head layer shape mismatch (64 vs num_classes) will be skipped automatically
+    pretrained_path = f'{args.root}/checkpoint/visformer-miniImageNet.pth'
+    pretrained_ckpt = torch.load(pretrained_path, map_location='cpu')
+    pretrained_dict = pretrained_ckpt['state_dict']
+    model_dict = model.state_dict()
+    filtered_dict = {k: v for k, v in pretrained_dict.items()
+                     if k in model_dict and v.shape == model_dict[k].shape}
+    skipped = [k for k in pretrained_dict if k not in filtered_dict]
+    model.load_state_dict(filtered_dict, strict=False)
+    utils.log(f'Loaded miniImageNet pretrained weights (epoch {pretrained_ckpt.get("epoch", "?")}), skipped: {skipped}')
+
     model=model.cuda()
 
     # Optimizer #
@@ -112,12 +125,12 @@ def main(args):
                   eps=1.e-8, 
                   lr=args.lr, 
                   weight_decay=5.e-2)
-    # lr_scheduler=None
-    lr_scheduler = CosineLRScheduler(optimizer, 
-                                    t_initial=args.epoch-120, 
-                                    lr_min=1.e-6,
-                                    warmup_t=120,
-                                    warmup_lr_init=2.e-6, 
+    # lr_scheduler - Transfer fine-tuning: shorter warmup, lower min lr
+    lr_scheduler = CosineLRScheduler(optimizer,
+                                    t_initial=args.epoch-20,
+                                    lr_min=1.e-7,
+                                    warmup_t=20,
+                                    warmup_lr_init=2.e-7,
                                     warmup_prefix=True)
     
     # Other parameters #
@@ -132,7 +145,7 @@ def main(args):
     else:
         start_epoch = 1
     max_epoch = args.epoch
-    save_epoch = 100
+    save_epoch = 50  # Transfer fine-tuning: save more frequently
     max_va1 = 0.
     max_va5 = 0.
     timer_used = utils.Timer() 
