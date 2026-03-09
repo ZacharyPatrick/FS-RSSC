@@ -7,17 +7,17 @@ sys.path.insert(0, BASE_DIR)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--seed', type=int, default=12345)
-parser.add_argument('--name', type=str, default='vgsr-dcma-apcm-cpf-ucm-')
+parser.add_argument('--name', type=str, default='vgsr-dcma-apcm-cpf-')
 parser.add_argument('--shot', type=int, default=1)
 parser.add_argument('--way', type=int, default=5)
 parser.add_argument('--query', type=int, default=15)
-parser.add_argument('--dataset', type=str, default='UCM')
+parser.add_argument('--dataset', type=str, default='NWPU')
 parser.add_argument('--image_size', type=int,default=224)
 parser.add_argument('--episode', type=int, default=600)
 parser.add_argument('--feat-size', type=int, default=384)
 parser.add_argument('--semantic-size', type=int, default=512)
 parser.add_argument('--backbone', type=str, default='visformer')
-parser.add_argument('--lr', type=float, default=2e-4)
+parser.add_argument('--lr', type=float, default=5e-4)
 parser.add_argument('--lr1', type=float, default=1e-6)
 parser.add_argument('--c_lr', type=float, default=1e-3)
 parser.add_argument('--resume', type=str, default='')
@@ -314,7 +314,7 @@ def main(config):
     elif args.dataset in ['AID', 'UCM']:
         if args.dataset == 'AID':
             args.train = f'/mnt/sdb/pzy/rssc_dataset/AID_split1/train'
-            args.val = f'/mnt/sdb/pzy/rssc_dataset/AID_split1/test'
+            args.val = f'/mnt/sdb/pzy/rssc_dataset/AID_split1/val'
         else:
             args.train = f'/mnt/sdb/pzy/rssc_dataset/{args.dataset}/train'
             args.val = f'/mnt/sdb/pzy/rssc_dataset/{args.dataset}/val'
@@ -390,10 +390,10 @@ def main(config):
         init = args.resume
     else:
         # init = '{}/checkpoint/visformer-{}.pth'.format(args.root, 'miniImageNet')
-        # init = '{}/checkpoint/{}/best-{}shot.pth'.format(args.root, args.dataset, args.shot)
+        init = '{}/checkpoint/{}/best-{}shot.pth'.format(args.root, 'NWPU-RESISC45', args.shot)
         # checkpoint = torch.load(init,map_location=device)
         # model.encoder.load_state_dict(checkpoint['state_dict'], strict=False)
-        init = '{}/checkpoint/{}/best-{}shot.pth'.format(args.root, 'UCM', args.shot)
+        # init = '{}/checkpoint/{}/best-{}shot.pth'.format(args.root, 'UCM', args.shot)
         # init = '{}/checkpoint/miniImageNet-{}-shot.pth'.format(args.root, args.shot)visformer-miniImageNet.pth
         # init = '{}/checkpoint/visformer-miniImageNet.pth'.format(args.root)
         checkpoint = torch.load(init, map_location=device)
@@ -419,6 +419,8 @@ def main(config):
     mid_lr_params_id = []
     mid_lr_params_id += [id(param) for param in model.encoder.t2i.parameters()]
     mid_lr_params_id += [id(param) for param in model.encoder.t2i2.parameters()]
+    # [Approach A] phi removed from model, no longer in optimizer
+    # mid_lr_params_id += [id(param) for param in model.phi.parameters()]
     mid_lr_params_id += [id(model.encoder.gate)]
     mid_lr_params_id += [id(model.encoder.log_tau)]
 
@@ -426,13 +428,7 @@ def main(config):
     high_lr_params_id = []
     high_lr_params_id += [id(param) for param in model.support_controller.parameters()]
     high_lr_params_id += [id(param) for param in model.rerank_controller.parameters()]
-    high_lr_params_id += [id(param) for param in model.phi.parameters()]
-    # high_lr_params_id += [id(param) for param in model.proj_k.parameters()]
-    # high_lr_params_id += [id(param) for param in model.proj_q.parameters()]
-    # high_lr_params_id += [id(param) for param in model.proj_v.parameters()]
-    # high_lr_params_id += [id(param) for param in model.fc_new.parameters()]
-    # high_lr_params_id += [id(param) for param in model.layer_norm.parameters()]
-    # high_lr_params_id += [id(param) for param in model.layer_norm2.parameters()]
+    # high_lr_params_id += [id(param) for param in model.phi.parameters()]
 
     # 3) 低学习率组：args.lr1（其余参数）
     other_params_id = []

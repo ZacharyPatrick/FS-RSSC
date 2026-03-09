@@ -539,11 +539,15 @@ class Visformer_DCMA_APCM_CPF(nn.Module):
             self.args.rerank * 2 + 2, self.args.rerank, self.args.rerank + 1
         )
 
-        # ---------------- phi(.) projection ONLY for Z_j ----------------
-        self.phi = nn.Linear(args.dim, args.dim)
-        nn.init.xavier_normal_(self.phi.weight)
-        if self.phi.bias is not None:
-            nn.init.zeros_(self.phi.bias)
+        # ---------------- phi(.) projection removed (Approach A) ----------------
+        # phi was causing space misalignment: phi(Z_j) in projected space
+        # while p'_j and X_j remain in original space, leading to cross-space
+        # distance computation and mixed-space prototype construction.
+        # Removing phi keeps all operations in a single consistent feature space.
+        # self.phi = nn.Linear(args.dim, args.dim)
+        # nn.init.xavier_normal_(self.phi.weight)
+        # if self.phi.bias is not None:
+        #     nn.init.zeros_(self.phi.bias)
 
     def _get_way(self) -> int:
         if self.training:
@@ -623,19 +627,19 @@ class Visformer_DCMA_APCM_CPF(nn.Module):
                     f"(setting={setting})."
                 )
 
-            # phi(.) ONLY for Z_j
-            Z_h = self.phi(Z_j)
+            # [Approach A] phi removed: use Z_j directly in original feature space
+            # All distance computations and prototype constructions now in the same space.
 
             # ---- select H_j (m nearest to p'_j) ----
             p_j_prime = p_prime[j].unsqueeze(0)                      # [1, dim]
-            d_p_to_Z = self._cos_dist(p_j_prime, Z_h).squeeze(0)      # [|Z_j|]
+            d_p_to_Z = self._cos_dist(p_j_prime, Z_j).squeeze(0)      # [|Z_j|]
 
             d_sorted, idx_sorted = torch.sort(d_p_to_Z)
             idx_H = idx_sorted[:m]
             idx_barH = idx_sorted[m:]
 
-            H_j = Z_h[idx_H]                                         # [m, dim]
-            barH_j = Z_h[idx_barH]                                   # [|Z|-m, dim]
+            H_j = Z_j[idx_H]                                         # [m, dim]
+            barH_j = Z_j[idx_barH]                                   # [|Z|-m, dim]
 
             # ---- raw distances ----
             dis1 = d_sorted[:m]                                      # [m]
