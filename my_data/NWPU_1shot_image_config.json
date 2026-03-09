@@ -1,0 +1,83 @@
+{
+    "dataset": "NWPU",
+    "shot": 1,
+    "processed_splits": [
+        "train",
+        "val",
+        "test"
+    ],
+    "clip_model": "ViT-B/16",
+    "feature_dim": 512,
+    "image_size": [
+        224,
+        224
+    ],
+    "transform_type": "train",
+    "generation_results_dir": "outputs/NWPU",
+    "total_generated_classes": 45,
+    "results": {
+        "train": {
+            "save_path": "./my_data/train/train_NWPU_1shot.pt",
+            "num_classes": 25,
+            "class_to_idx": {
+                "airplane": 0,
+                "baseball diamond": 1,
+                "beach": 2,
+                "bridge": 3,
+                "chaparral": 4,
+                "church": 5,
+                "cloud": 6,
+                "desert": 7,
+                "freeway": 8,
+                "golf course": 9,
+                "harbor": 10,
+                "island": 11,
+                "lake": 12,
+                "meadow": 13,
+                "mobile home park": 14,
+                "mountain": 15,
+                "palace": 16,
+                "railway": 17,
+                "rectangular farmland": 18,
+                "roundabout": 19,
+                "sea ice": 20,
+                "ship": 21,
+                "sparse residential": 22,
+                "stadium": 23,
+                "wetland": 24
+            }
+        },
+        "val": {
+            "save_path": "./my_data/val/val_NWPU_1shot.pt",
+            "num_classes": 10,
+            "class_to_idx": {
+                "commercial area": 0,
+                "industrial area": 1,
+                "overpass": 2,
+                "railway station": 3,
+                "runway": 4,
+                "snowberg": 5,
+                "storage tank": 6,
+                "tennis court": 7,
+                "terrace": 8,
+                "thermal power station": 9
+            }
+        },
+        "test": {
+            "save_path": "./my_data/test/test_NWPU_1shot.pt",
+            "num_classes": 10,
+            "class_to_idx": {
+                "airport": 0,
+                "basketball court": 1,
+                "circular farmland": 2,
+                "dense residential": 3,
+                "forest": 4,
+                "ground track field": 5,
+                "intersection": 6,
+                "medium residential": 7,
+                "parking lot": 8,
+                "river": 9
+            }
+        }
+    }
+}
