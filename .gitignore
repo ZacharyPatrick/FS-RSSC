@@ -32,3 +32,6 @@ tensorboard/
 *.md
 *.txt
 *.pdf
+
+# paper
+paper/
