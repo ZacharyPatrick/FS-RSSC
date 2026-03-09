@@ -28,5 +28,7 @@ Thumbs.db
 *.log
 tensorboard/
 
-README.md
-requirements.txt
+# documentation
+*.md
+*.txt
+*.pdf
