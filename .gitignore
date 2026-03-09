@@ -11,6 +11,9 @@ save/
 # Dataset (download separately)
 dataset/
 
+# visualization for figures and tables
+visualization/
+
 # IDE
 .idea/
 .claude/
