@@ -27,3 +27,6 @@ Thumbs.db
 # Logs
 *.log
 tensorboard/
+
+README.md
+requirements.txt
